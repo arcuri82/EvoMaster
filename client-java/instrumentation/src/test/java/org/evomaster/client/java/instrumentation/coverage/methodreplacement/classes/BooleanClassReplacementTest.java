@@ -74,4 +74,5 @@ public class BooleanClassReplacementTest {
         boolean booleanValue = BooleanClassReplacement.valueOf("true", prefix);
         assertTrue(booleanValue);
     }
+
 }

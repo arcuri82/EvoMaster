@@ -13,29 +13,46 @@ public class SutRunDto {
     public Boolean resetState;
 
     /**
-     *  Whether SQL heuristics should be computed.
-     *  Note: those can be very expensive
+     * Whether SQL heuristics should be computed.
+     * Note: those can be very expensive
      */
     public Boolean calculateSqlHeuristics;
 
     /**
-     *  Whether SQL execution info should be saved.
+     * Whether SQL execution info should be saved.
      */
     public Boolean extractSqlExecutionInfo;
+
+
+    /**
+     * Whether Mongo execution info should be saved.
+     */
+    public Boolean extractMongoExecutionInfo;
+
 
     public SutRunDto() {
     }
 
-    public SutRunDto(Boolean run, Boolean resetState, Boolean calculateSqlHeuristics, Boolean extractSqlExecutionInfo) {
+    public SutRunDto(Boolean run,
+                     Boolean resetState,
+                     Boolean calculateSqlHeuristics,
+                     Boolean extractSqlExecutionInfo,
+                     Boolean extractMongoExecutionInfo) {
         if (calculateSqlHeuristics != null && calculateSqlHeuristics && extractSqlExecutionInfo != null && !extractSqlExecutionInfo)
             throw new IllegalArgumentException("extractSqlExecutionInfo should be enabled when calculateSqlHeuristics is enabled");
+
         this.run = run;
         this.resetState = resetState;
         this.calculateSqlHeuristics = calculateSqlHeuristics;
         this.extractSqlExecutionInfo = extractSqlExecutionInfo;
+        this.extractMongoExecutionInfo = extractMongoExecutionInfo;
     }
 
-    public SutRunDto(Boolean run, Boolean resetState, Boolean calculateSqlHeuristics){
-        this(run, resetState, calculateSqlHeuristics, calculateSqlHeuristics!=null && calculateSqlHeuristics);
+    public SutRunDto(Boolean run, Boolean resetState, Boolean calculateSqlHeuristics, Boolean extractMongoExecutionInfo) {
+        this(run,
+                resetState,
+                calculateSqlHeuristics,
+                calculateSqlHeuristics != null && calculateSqlHeuristics,
+                extractMongoExecutionInfo != null && extractMongoExecutionInfo);
     }
 }

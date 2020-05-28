@@ -28,3 +28,7 @@ org.w3c.
 mockit.
 shaded.
 sun.
+com.mongodb.client.MongoCollection
+com.mongodb.client.FindIterable
+com.mongodb.client.ClientSession
+org.bson.conversions.Bson

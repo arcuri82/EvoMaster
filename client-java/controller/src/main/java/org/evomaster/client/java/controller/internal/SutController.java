@@ -8,9 +8,13 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.evomaster.client.java.controller.EmbeddedSutController;
 import org.evomaster.client.java.controller.SutHandler;
 import org.evomaster.client.java.controller.api.dto.*;
+import org.evomaster.client.java.controller.api.dto.mongo.FindOperationDto;
+import org.evomaster.client.java.controller.api.dto.mongo.MongoExecutionDto;
 import org.evomaster.client.java.controller.db.SqlScriptRunner;
+import org.evomaster.client.java.controller.internal.db.mongo.MongoHandler;
 import org.evomaster.client.java.controller.internal.db.SchemaExtractor;
 import org.evomaster.client.java.controller.internal.db.SqlHandler;
+import org.evomaster.client.java.controller.mongo.DetailedFindResult;
 import org.evomaster.client.java.controller.problem.ProblemInfo;
 import org.evomaster.client.java.instrumentation.staticstate.UnitsInfoRecorder;
 import org.evomaster.client.java.utils.SimpleLogger;
@@ -42,6 +46,8 @@ public abstract class SutController implements SutHandler {
     private String controllerHost = ControllerConstants.DEFAULT_CONTROLLER_HOST;
 
     private final SqlHandler sqlHandler = new SqlHandler();
+
+    protected final MongoHandler mongoHandler = new MongoHandler();
 
     private Server controllerServer;
 
@@ -165,11 +171,14 @@ public abstract class SutController implements SutHandler {
         sqlHandler.handle(sql);
     }
 
-    public final void enableComputeSqlHeuristicsOrExtractExecution(boolean enableSqlHeuristics, boolean enableSqlExecution){
+    public final void enableComputeSqlHeuristicsOrExtractExecution(boolean enableSqlHeuristics, boolean enableSqlExecution) {
         sqlHandler.setCalculateHeuristics(enableSqlHeuristics);
         sqlHandler.setExtractSqlExecution(enableSqlHeuristics || enableSqlExecution);
     }
 
+    public final void enableExtractMongoExecutionInfo(boolean enableMongoExecution) {
+        mongoHandler.setExtractMongoExecution(enableMongoExecution);
+    }
 
     /**
      * This is needed only during test generation (not execution),
@@ -180,8 +189,18 @@ public abstract class SutController implements SutHandler {
         sqlHandler.setConnection(getConnection());
     }
 
+    /**
+     * This is needed only during test generation (not execution),
+     * and it is automatically called by the EM controller after
+     * the SUT is started.
+     */
+    public final void initMongoClient() {
+
+    }
+
     public final void resetExtraHeuristics() {
         sqlHandler.reset();
+        mongoHandler.reset();
     }
 
     public final List<ExtraHeuristicsDto> getExtraHeuristics() {
@@ -197,7 +216,7 @@ public abstract class SutController implements SutHandler {
 
         ExtraHeuristicsDto dto = new ExtraHeuristicsDto();
 
-        if(sqlHandler.isCalculateHeuristics()) {
+        if (sqlHandler.isCalculateHeuristics()) {
             sqlHandler.getDistances().stream()
                     .map(p ->
                             new HeuristicEntryDto(
@@ -208,10 +227,16 @@ public abstract class SutController implements SutHandler {
                             ))
                     .forEach(h -> dto.heuristics.add(h));
         }
-        if (sqlHandler.isCalculateHeuristics() || sqlHandler.isExtractSqlExecution()){
+        if (sqlHandler.isCalculateHeuristics() || sqlHandler.isExtractSqlExecution()) {
             ExecutionDto executionDto = sqlHandler.getExecutionDto();
             dto.databaseExecutionDto = executionDto;
         }
+
+        if (mongoHandler.isExtractMongoExecution()) {
+            MongoExecutionDto mongoExecutionDto = mongoHandler.getMongoExecutionDto();
+            dto.mongoExecutionDto = mongoExecutionDto;
+        }
+
 
         return dto;
     }
@@ -251,12 +276,12 @@ public abstract class SutController implements SutHandler {
      *
      * @return false if the verification failed
      */
-    public final boolean verifySqlConnection(){
+    public final boolean verifySqlConnection() {
 
         Connection connection = getConnection();
-        if(connection == null
+        if (connection == null
                 //check does not make sense for External
-                || !(this instanceof EmbeddedSutController)){
+                || !(this instanceof EmbeddedSutController)) {
             return true;
         }
 
@@ -343,7 +368,7 @@ public abstract class SutController implements SutHandler {
 
     /**
      * @return a list of valid authentication credentials, or {@code null} if
-     *      * none is necessary
+     * * none is necessary
      */
     public abstract List<AuthenticationDto> getInfoForAuthentication();
 
@@ -354,6 +379,7 @@ public abstract class SutController implements SutHandler {
      * @return {@code null} if the SUT does not use any SQL database
      */
     public abstract Connection getConnection();
+
 
     /**
      * If the system under test (SUT) uses a SQL database, we need to specify
@@ -388,9 +414,9 @@ public abstract class SutController implements SutHandler {
 
     public abstract UnitsInfoDto getUnitsInfoDto();
 
-    protected UnitsInfoDto getUnitsInfoDto(UnitsInfoRecorder recorder){
+    protected UnitsInfoDto getUnitsInfoDto(UnitsInfoRecorder recorder) {
 
-        if(recorder == null){
+        if (recorder == null) {
             return null;
         }
 
@@ -403,5 +429,21 @@ public abstract class SutController implements SutHandler {
         dto.unitNames = recorder.getUnitNames();
         dto.parsedDtos = recorder.getParsedDtos();
         return dto;
+    }
+
+    public final void handleMongo(String mongoOperation) {
+        Objects.requireNonNull(mongoOperation);
+
+        mongoHandler.handle(mongoOperation);
+    }
+
+    /**
+     * If the system under test (SUT) uses a Mongo database, we need to have a
+     * configured client to access it.
+     *
+     * @return {@code null} if the SUT does not use any Mongo database
+     */
+    public DetailedFindResult executeMongoFindOperation(FindOperationDto dto) {
+        return null;
     }
 }

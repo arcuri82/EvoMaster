@@ -14,7 +14,7 @@ public class HeuristicEntryDto {
     /**
      * Should we try to minimize or maximize the heuristic?
      */
-    public enum Objective{
+    public enum Objective {
         /**
          * The lower the better.
          * Minimum is 0. It can be considered as a "distance" to minimize.

@@ -4,9 +4,12 @@ import org.evomaster.client.java.controller.api.ControllerConstants;
 import org.evomaster.client.java.controller.api.Formats;
 import org.evomaster.client.java.controller.api.dto.*;
 import org.evomaster.client.java.controller.api.dto.database.operations.DatabaseCommandDto;
+import org.evomaster.client.java.controller.api.dto.mongo.FindOperationDto;
+import org.evomaster.client.java.controller.api.dto.mongo.FindResultDto;
 import org.evomaster.client.java.controller.api.dto.problem.RestProblemDto;
 import org.evomaster.client.java.controller.db.QueryResult;
 import org.evomaster.client.java.controller.db.SqlScriptRunner;
+import org.evomaster.client.java.controller.mongo.DetailedFindResult;
 import org.evomaster.client.java.controller.problem.ProblemInfo;
 import org.evomaster.client.java.controller.problem.RestProblem;
 import org.evomaster.client.java.instrumentation.AdditionalInfo;
@@ -42,7 +45,7 @@ public class EMController {
      * Keep track of all host:port clients connect so far.
      * This is the mainly done for debugging, to check that we are using
      * a single TCP connection, instead of creating new ones at each request.
-     *
+     * <p>
      * However, we want to check it only during testing
      */
     private static final Set<String> connectedClientsSoFar = new CopyOnWriteArraySet<>();
@@ -52,7 +55,7 @@ public class EMController {
         this.sutController = Objects.requireNonNull(sutController);
     }
 
-    private boolean trackRequestSource(HttpServletRequest request){
+    private boolean trackRequestSource(HttpServletRequest request) {
         String source = request.getRemoteAddr() + ":" + request.getRemotePort();
         connectedClientsSoFar.add(source);
         return true;
@@ -70,7 +73,7 @@ public class EMController {
     /**
      * Only used debugging/testing
      */
-    public static void resetConnectedClientsSoFar(){
+    public static void resetConnectedClientsSoFar() {
         connectedClientsSoFar.clear();
     }
 
@@ -79,15 +82,15 @@ public class EMController {
     public Response getSutInfo(@Context HttpServletRequest httpServletRequest) {
 
         String connectionHeader = httpServletRequest.getHeader("Connection");
-        if( connectionHeader == null
-                || !connectionHeader.equalsIgnoreCase("keep-alive")){
+        if (connectionHeader == null
+                || !connectionHeader.equalsIgnoreCase("keep-alive")) {
             return Response.status(400).entity(WrappedResponseDto
                     .withError("Requests should always contain a 'Connection: keep-alive'")).build();
         }
 
         assert trackRequestSource(httpServletRequest);
 
-        if(! sutController.verifySqlConnection()){
+        if (!sutController.verifySqlConnection()) {
             String msg = "SQL drivers are misconfigured. You must use a 'p6spy' wrapper when you " +
                     "run the SUT. For example, a database connection URL like 'jdbc:h2:mem:testdb' " +
                     "should be changed into 'jdbc:p6spy:h2:mem:testdb'. " +
@@ -122,7 +125,7 @@ public class EMController {
         }
 
         dto.unitsInfoDto = sutController.getUnitsInfoDto();
-        if(dto.unitsInfoDto == null){
+        if (dto.unitsInfoDto == null) {
             String msg = "Failed to extract units info";
             SimpleLogger.error(msg);
             return Response.status(500).entity(WrappedResponseDto.withError(msg)).build();
@@ -172,8 +175,10 @@ public class EMController {
 
             boolean sqlHeuristics = dto.calculateSqlHeuristics != null && dto.calculateSqlHeuristics;
             boolean sqlExecution = dto.extractSqlExecutionInfo != null && dto.extractSqlExecutionInfo;
+            boolean mongoExecution = dto.extractMongoExecutionInfo != null && dto.extractMongoExecutionInfo;
 
             sutController.enableComputeSqlHeuristicsOrExtractExecution(sqlHeuristics, sqlExecution);
+            sutController.enableExtractMongoExecutionInfo(mongoExecution);
 
             boolean doReset = dto.resetState != null && dto.resetState;
 
@@ -205,10 +210,12 @@ public class EMController {
                             return Response.status(500).entity(WrappedResponseDto.withError(msg)).build();
                         }
                         sutController.initSqlHandler();
+                        sutController.initMongoClient();
                     } else {
                         //TODO as starting should be blocking, need to check
                         //if initialized, and wait if not
                     }
+
 
                     /*
                         regardless of where it was running or not, need to reset state.
@@ -298,10 +305,10 @@ public class EMController {
                     info.parsedDtoNames = new HashSet<>(a.getParsedDtoNamesView());
 
                     info.stringSpecializations = new HashMap<>();
-                    for(Map.Entry<String, Set<StringSpecializationInfo>> entry :
-                            a.getStringSpecializationsView().entrySet()){
+                    for (Map.Entry<String, Set<StringSpecializationInfo>> entry :
+                            a.getStringSpecializationsView().entrySet()) {
 
-                        assert ! entry.getValue().isEmpty();
+                        assert !entry.getValue().isEmpty();
 
                         List<StringSpecializationInfoDto> list = entry.getValue().stream()
                                 .map(it -> new StringSpecializationInfoDto(
@@ -351,6 +358,32 @@ public class EMController {
         return Response.status(204).entity(WrappedResponseDto.withNoData()).build();
     }
 
+
+    @Path(ControllerConstants.MONGO_COMMAND)
+    @Consumes(Formats.JSON_V1)
+    @POST
+    public Response executeMongoOperation(FindOperationDto dto, @Context HttpServletRequest httpServletRequest) {
+
+        assert trackRequestSource(httpServletRequest);
+
+        try {
+            DetailedFindResult findResult = this.sutController.executeMongoFindOperation(dto);
+            WrappedResponseDto<FindResultDto> wrappedResponse = WrappedResponseDto.withData(findResult.toDto());
+            return Response.status(200).entity(wrappedResponse).build();
+
+        } catch (RuntimeException e) {
+            /*
+                FIXME: ideally, would not need to do a try/catch on each single endpoint,
+                as could configure Jetty/Jackson to log all errors.
+                But even after spending hours googling it, haven't managed to configure it
+             */
+
+            String msg = "Thrown exception: " + e.getMessage();
+            SimpleLogger.error(msg, e);
+            return Response.status(500).entity(WrappedResponseDto.withError(msg)).build();
+        }
+
+    }
 
     @Path(ControllerConstants.DATABASE_COMMAND)
     @Consumes(Formats.JSON_V1)

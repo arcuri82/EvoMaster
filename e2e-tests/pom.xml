@@ -17,6 +17,7 @@
         <module>dropwizard-examples</module>
         <module>spring-examples</module>
         <module>spring-rest-postgres</module>
+        <module>spring-rest-mongo</module>
         <module>spring-rest-openapi-v3</module>
     </modules>
 

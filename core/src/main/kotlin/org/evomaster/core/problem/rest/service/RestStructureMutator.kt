@@ -32,10 +32,23 @@ class RestStructureMutator : StructureMutator() {
 
     override fun addInitializingActions(individual: EvaluatedIndividual<*>, mutatedGenes: MutatedGeneSpecification?) {
 
-        if (!config.shouldGenerateSqlData()) {
-            return
+        if (config.shouldGenerateSqlData()) {
+            generateSqlData(individual, mutatedGenes)
         }
 
+        if (config.shouldGenerateMongoData()) {
+            generateMongoData(individual, mutatedGenes)
+        }
+    }
+
+    private fun generateMongoData(individual: EvaluatedIndividual<*>, mutatedGenes: MutatedGeneSpecification?) {
+        val ind = individual.individual as? RestIndividual
+                ?: throw IllegalArgumentException("Invalid individual type")
+
+        // TODO create
+    }
+
+    private fun generateSqlData(individual: EvaluatedIndividual<*>, mutatedGenes: MutatedGeneSpecification?) {
         val ind = individual.individual as? RestIndividual
                 ?: throw IllegalArgumentException("Invalid individual type")
 
@@ -47,11 +60,11 @@ class RestStructureMutator : StructureMutator() {
             return
         }
 
-        if(ind.dbInitialization.isEmpty()
-                || ! ind.dbInitialization.any { it.representExistingData }) {
+        if (ind.dbInitialization.isEmpty()
+                || !ind.dbInitialization.any { it.representExistingData }) {
             //add existing data only once
             ind.dbInitialization.addAll(0, sampler.existingSqlData)
-            mutatedGenes?.addedInitializationGenes?.addAll( sampler.existingSqlData.flatMap { it.seeGenes() })
+            mutatedGenes?.addedInitializationGenes?.addAll(sampler.existingSqlData.flatMap { it.seeGenes() })
         }
 
         val max = config.maxSqlInitActionsPerMissingData
@@ -150,9 +163,9 @@ class RestStructureMutator : StructureMutator() {
 
         (0 until ind.seeActions().size - 1).forEach {
             val a = ind.seeActions()[it]
-            Lazy.assert{a !is RestCallAction || a.verb == HttpVerb.POST}
+            Lazy.assert { a !is RestCallAction || a.verb == HttpVerb.POST }
         }
-        Lazy.assert{ val a = ind.seeActions().last(); a is RestCallAction && a.verb == HttpVerb.GET }
+        Lazy.assert { val a = ind.seeActions().last(); a is RestCallAction && a.verb == HttpVerb.GET }
 
         val indices = ind.seeActions().indices
                 .filter { i ->
@@ -194,7 +207,7 @@ class RestStructureMutator : StructureMutator() {
             val idx = indices.last()
 
             val postTemplate = ind.seeActions()[idx] as RestCallAction
-            Lazy.assert{postTemplate.verb == HttpVerb.POST && !postTemplate.saveLocation}
+            Lazy.assert { postTemplate.verb == HttpVerb.POST && !postTemplate.saveLocation }
 
             val post = sampler.createActionFor(postTemplate, ind.seeActions().last() as RestCallAction)
 

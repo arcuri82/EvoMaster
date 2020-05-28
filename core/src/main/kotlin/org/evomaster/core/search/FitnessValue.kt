@@ -1,8 +1,9 @@
 package org.evomaster.core.search
 
 import org.evomaster.core.EMConfig
-import org.evomaster.core.database.DatabaseExecution
 import org.evomaster.core.EMConfig.SecondaryObjectiveStrategy.*
+import org.evomaster.core.database.DatabaseExecution
+import org.evomaster.core.mongo.MongoExecution
 import org.evomaster.core.search.service.IdMapper
 import kotlin.math.min
 
@@ -58,6 +59,15 @@ class FitnessValue(
      */
     private val databaseExecutions: MutableMap<Int, DatabaseExecution> = mutableMapOf()
 
+
+    /**
+     * Key -> action Id
+     *
+     * Value -> info on how the Mongo database was accessed during that action
+     */
+    private val mongoExecutions: MutableMap<Int, MongoExecution> = mutableMapOf()
+
+
     /**
      * When SUT does SQL commands using WHERE, keep track of when those "fails" (ie evaluate
      * to false), in particular the tables and columns in them involved
@@ -70,6 +80,7 @@ class FitnessValue(
         copy.targets.putAll(this.targets)
         copy.extraToMinimize.putAll(this.extraToMinimize)
         copy.databaseExecutions.putAll(this.databaseExecutions) //note: DatabaseExecution supposed to be immutable
+        copy.mongoExecutions.putAll(this.mongoExecutions)
         copy.aggregateDatabaseData()
         return copy
     }
@@ -94,6 +105,10 @@ class FitnessValue(
 
     fun setDatabaseExecution(actionIndex: Int, databaseExecution: DatabaseExecution){
         databaseExecutions[actionIndex] = databaseExecution
+    }
+
+    fun setMongoExecution(actionIndex: Int, mongoExecution: MongoExecution){
+        mongoExecutions[actionIndex] = mongoExecution
     }
 
     fun isAnyDatabaseExecutionInfo() = databaseExecutions.isNotEmpty()

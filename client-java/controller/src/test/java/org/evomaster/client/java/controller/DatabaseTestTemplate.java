@@ -2,7 +2,6 @@ package org.evomaster.client.java.controller;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import org.evomaster.client.java.controller.InstrumentedSutStarter;
 import org.evomaster.client.java.controller.api.dto.SutRunDto;
 import org.evomaster.client.java.controller.db.DatabaseFakeSutController;
 import org.evomaster.client.java.controller.db.SqlScriptRunner;
@@ -66,8 +65,10 @@ public abstract class DatabaseTestTemplate {
     }
 
     protected void startSut(int port) {
+        boolean calculateSqlHeuristics = true;
+        boolean enableMongoExtraction = false;
         given().contentType(ContentType.JSON)
-                .body(new SutRunDto(true, false, true))
+                .body(new SutRunDto(true, false, calculateSqlHeuristics, enableMongoExtraction))
                 .put("http://localhost:" + port + BASE_PATH + RUN_SUT_PATH)
                 .then()
                 .statusCode(204);
@@ -84,10 +85,12 @@ public abstract class DatabaseTestTemplate {
     }
 
     protected void startNewTest(String url){
+        boolean calculateSqlHeuristics = true;
+        boolean enableMongoExtraction = false;
 
         given().accept(ContentType.ANY)
                 .contentType(ContentType.JSON)
-                .body(new SutRunDto(true, true, true))
+                .body(new SutRunDto(true, true, calculateSqlHeuristics, enableMongoExtraction))
                 .put(url + RUN_SUT_PATH)
                 .then()
                 .statusCode(204);

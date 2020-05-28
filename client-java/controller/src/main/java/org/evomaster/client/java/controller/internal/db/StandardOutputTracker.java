@@ -1,5 +1,6 @@
 package org.evomaster.client.java.controller.internal.db;
 
+import org.evomaster.client.java.databasespy.MongoSpyLogger;
 import org.evomaster.client.java.utils.SimpleLogger;
 import org.evomaster.client.java.controller.internal.SutController;
 import org.evomaster.client.java.databasespy.P6SpyFormatter;
@@ -26,15 +27,15 @@ import java.util.Objects;
  * <p>
  * This class can be used for any analyses of the SUT output
  */
-public class StandardOutputTracker extends ByteArrayOutputStream{
+public class StandardOutputTracker extends ByteArrayOutputStream {
 
     private static final PrintStream DEFAULT_OUT = System.out;
 
     private volatile SutController sutController;
 
 
-    public static void setTracker(boolean on, SutController sutController){
-        if(on){
+    public static void setTracker(boolean on, SutController sutController) {
+        if (on) {
             System.setOut(new PrintStream(new StandardOutputTracker(sutController), true));
         } else {
             System.setOut(DEFAULT_OUT);
@@ -68,18 +69,38 @@ public class StandardOutputTracker extends ByteArrayOutputStream{
 
         if (data != null) {
             Arrays.stream(data.split("\n"))
-                    .filter(l -> l.startsWith(P6SpyFormatter.PREFIX))
                     .forEach(l -> {
-                        handleSqlLine(sutController, l);
+                        if (l.startsWith(P6SpyFormatter.PREFIX)) {
+                            handleSqlLine(sutController, l);
+                        } else if (l.startsWith(MongoSpyLogger.PREFIX)) {
+                            handleMongoLine(sutController, l);
+                        }
                     });
         }
     }
 
-    public static void handleSqlLine(SutController sc, String line){
+    public static void handleMongoLine(SutController sc, String line) {
         Objects.requireNonNull(sc);
         Objects.requireNonNull(line);
 
-        if(! line.startsWith(P6SpyFormatter.PREFIX)){
+        if (!line.startsWith(MongoSpyLogger.PREFIX)) {
+            throw new IllegalArgumentException("No MongoSpy prefix");
+        }
+
+        String mongoLine = line.substring(MongoSpyLogger.PREFIX.length());
+
+        try {
+            sc.handleMongo(mongoLine);
+        } catch (Exception | Error e) {
+            SimpleLogger.error("Failed to handle Mongo command: '" + mongoLine + "'\n" + e.getMessage());
+        }
+    }
+
+    public static void handleSqlLine(SutController sc, String line) {
+        Objects.requireNonNull(sc);
+        Objects.requireNonNull(line);
+
+        if (!line.startsWith(P6SpyFormatter.PREFIX)) {
             throw new IllegalArgumentException("No P6Spy prefix");
         }
 
@@ -87,8 +108,8 @@ public class StandardOutputTracker extends ByteArrayOutputStream{
 
         try {
             sc.handleSql(sql);
-        } catch (Exception | Error e){
-            SimpleLogger.error("Failed to handle SQL command: '"+sql+"'\n" + e.getMessage());
+        } catch (Exception | Error e) {
+            SimpleLogger.error("Failed to handle SQL command: '" + sql + "'\n" + e.getMessage());
         }
     }
 

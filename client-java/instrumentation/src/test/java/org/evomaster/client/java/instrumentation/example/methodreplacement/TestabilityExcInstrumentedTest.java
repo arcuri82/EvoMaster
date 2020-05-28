@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by arcuri82 on 27-Jun-19.
  */
-public class TestabilityExcInstrumentedTest {
+public class TestabilityExcInstrumentedTest  {
 
     protected TestabilityExc getInstance() throws Exception {
 

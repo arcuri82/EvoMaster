@@ -2,10 +2,10 @@ package org.evomaster.client.java.instrumentation.staticstate;
 
 import org.evomaster.client.java.instrumentation.Action;
 import org.evomaster.client.java.instrumentation.AdditionalInfo;
-import org.evomaster.client.java.instrumentation.shared.*;
 import org.evomaster.client.java.instrumentation.TargetInfo;
 import org.evomaster.client.java.instrumentation.heuristic.HeuristicsForJumps;
 import org.evomaster.client.java.instrumentation.heuristic.Truthness;
+import org.evomaster.client.java.instrumentation.shared.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,7 +56,6 @@ public class ExecutionTracer {
     static {
         reset();
     }
-
 
     public static void reset() {
         objectiveCoverage.clear();
@@ -337,4 +336,5 @@ public class ExecutionTracer {
 
         updateBranch(className, line, branchId, t);
     }
+
 }

@@ -242,6 +242,16 @@ class EMConfig {
                     "extracting SQL execution info with 'extractSqlExecutionInfo'")
         }
 
+        if (shouldGenerateMongoData() && !heuristicsForMongo) {
+            throw IllegalArgumentException("Cannot generate MongoDB data if you not enable " +
+                    "collecting heuristics with 'heuristicsForMongo'")
+        }
+
+        if (heuristicsForMongo && !extractMongoExecutionInfo) {
+            throw IllegalArgumentException("Cannot collect heuristics Mongo data if you not enable " +
+                    "extracting Mongo execution info with 'extractMongoExecutionInfo'")
+        }
+
         if (enableTrackEvaluatedIndividual && enableTrackIndividual) {
             throw IllegalArgumentException("When tracking EvaluatedIndividual, it is not necessary to track individual")
         }
@@ -425,6 +435,8 @@ class EMConfig {
     }
 
     fun shouldGenerateSqlData() = generateSqlDataWithDSE || generateSqlDataWithSearch
+
+    fun shouldGenerateMongoData() = generateMongoDataWithSearch
 
     fun experimentalFeatures(): List<String> {
 
@@ -812,6 +824,18 @@ class EMConfig {
 
     @Cfg("Enable extracting SQL execution info")
     var extractSqlExecutionInfo = true
+
+    @Experimental
+    @Cfg("Tracking of MongoDB commands to improve test generation")
+    var heuristicsForMongo = false
+
+    @Experimental
+    @Cfg("Enable extracting MongoDB execution info")
+    var extractMongoExecutionInfo = false
+
+    @Experimental
+    @Cfg("Enable EvoMaster to generate MongoDB data with direct accesses to the database. Use a search algorithm")
+    var generateMongoDataWithSearch = false
 
     @Experimental
     @Cfg("Enable EvoMaster to generate SQL data with direct accesses to the database. Use Dynamic Symbolic Execution")
