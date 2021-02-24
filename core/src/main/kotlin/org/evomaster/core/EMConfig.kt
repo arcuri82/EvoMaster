@@ -791,6 +791,14 @@ class EMConfig {
     @FilePath
     var extraHeuristicsFile = "extra_heuristics.csv"
 
+    @Experimental
+    @Cfg("Enable to print snapshots of the generated tests during the search in an interval defined in snapshotsInterval.")
+    var enableWriteSnapshotTests = false
+
+    @Experimental
+    @Cfg("The size (in seconds) of the interval that the snapshots will be printed, if enabled.")
+    var writeSnapshotTestsIntervalInSeconds = 3600 // ie, 1 hour
+
 
     enum class SecondaryObjectiveStrategy {
         AVG_DISTANCE,
@@ -968,6 +976,7 @@ class EMConfig {
 
     @Cfg("Enable to expand the genotype of REST individuals based on runtime information missing from Swagger")
     var expandRestIndividuals = true
+
 
     enum class ResourceSamplingStrategy(val requiredArchive: Boolean = false) {
         NONE,

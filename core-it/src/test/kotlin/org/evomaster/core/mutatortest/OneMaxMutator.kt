@@ -8,6 +8,7 @@ import com.netflix.governator.lifecycle.LifecycleManager
 import org.apache.commons.math3.stat.inference.MannWhitneyUTest
 import org.evomaster.core.BaseModule
 import org.evomaster.core.EMConfig
+import org.evomaster.core.search.Solution
 import org.evomaster.core.search.algorithms.MioAlgorithm
 import org.evomaster.core.search.algorithms.onemax.ManipulatedOneMaxModule
 import org.evomaster.core.search.algorithms.onemax.ManipulatedOneMaxMutator

@@ -7,6 +7,7 @@ import com.netflix.governator.guice.LifecycleInjector
 import com.netflix.governator.lifecycle.LifecycleManager
 import org.evomaster.core.BaseModule
 import org.evomaster.core.EMConfig
+import org.evomaster.core.search.Solution
 import org.evomaster.core.search.algorithms.MioAlgorithm
 import org.evomaster.core.search.algorithms.onemax.*
 import org.junit.jupiter.api.BeforeEach

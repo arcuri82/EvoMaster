@@ -2,7 +2,6 @@ package org.evomaster.core.search.algorithms
 
 import org.evomaster.core.EMConfig
 import org.evomaster.core.search.Individual
-import org.evomaster.core.search.Solution
 import org.evomaster.core.search.algorithms.wts.WtsEvalIndividual
 import org.evomaster.core.search.service.SearchAlgorithm
 
@@ -24,51 +23,47 @@ class WtsAlgorithm<T> : SearchAlgorithm<T>() where T : Individual {
 
 
     private val population: MutableList<WtsEvalIndividual<T>> = mutableListOf()
+    private var populationSize = config.populationSize
 
     override fun getType(): EMConfig.Algorithm {
         return EMConfig.Algorithm.WTS
     }
 
-
-    override fun search(): Solution<T> {
-
-        time.startSearch()
+    override fun setupBeforeSearch() {
         population.clear()
 
         initPopulation()
-        val n = config.populationSize
+    }
 
-        while (time.shouldContinueSearch()) {
+    override fun searchOnce() {
 
-            //new generation
+        //new generation
 
-            val nextPop: MutableList<WtsEvalIndividual<T>> = mutableListOf()
+        val nextPop: MutableList<WtsEvalIndividual<T>> = mutableListOf()
 
-            while (nextPop.size < n) {
+        while (nextPop.size < populationSize) {
 
-                val x = selection()
-                val y = selection()
-                //x and y are copied
+            val x = selection()
+            val y = selection()
+            //x and y are copied
 
-                if (randomness.nextBoolean(config.xoverProbability)) {
-                    xover(x, y)
-                }
-                mutate(x)
-                mutate(y)
-
-                nextPop.add(x)
-                nextPop.add(y)
-
-                if (!time.shouldContinueSearch()) {
-                    break
-                }
+            if (randomness.nextBoolean(config.xoverProbability)) {
+                xover(x, y)
             }
+            mutate(x)
+            mutate(y)
 
-            population.clear()
-            population.addAll(nextPop)
+            nextPop.add(x)
+            nextPop.add(y)
+
+            if (!time.shouldContinueSearch()) {
+                break
+            }
         }
 
-        return archive.extractSolution()
+        population.clear()
+        population.addAll(nextPop)
+
     }
 
     private fun mutate(wts: WtsEvalIndividual<T>) {
@@ -90,7 +85,7 @@ class WtsAlgorithm<T> : SearchAlgorithm<T>() where T : Individual {
                 val i = randomness.nextInt(n)
                 val ind = wts.suite[i]
 
-                getMutatator().mutateAndSave(ind, archive)
+                getMutator().mutateAndSave(ind, archive)
                         ?.let { wts.suite[i] = it }
             }
         }
@@ -122,7 +117,7 @@ class WtsAlgorithm<T> : SearchAlgorithm<T>() where T : Individual {
 
         val i = randomness.nextInt(Math.min(nx, ny))
 
-        (0..i).forEach {
+        (0..i).forEach { _ ->
             val k = x.suite[i]
             x.suite[i] = y.suite[i]
             y.suite[i] = k
@@ -131,9 +126,7 @@ class WtsAlgorithm<T> : SearchAlgorithm<T>() where T : Individual {
 
     private fun initPopulation() {
 
-        val n = config.populationSize
-
-        for (i in 1..n) {
+        for (i in 1..populationSize) {
             population.add(sampleSuite())
 
             if (!time.shouldContinueSearch()) {
