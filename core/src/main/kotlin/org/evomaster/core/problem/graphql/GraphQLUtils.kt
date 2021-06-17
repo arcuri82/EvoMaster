@@ -13,7 +13,7 @@ object GraphQLUtils {
 
     private val log = LoggerFactory.getLogger(GraphQLUtils::class.java)
 
-    fun generateGQLBodyEntity(a : GraphQLAction, targetFormat: OutputFormat): Entity<String>?{
+    fun generateGQLBodyEntity(a: GraphQLAction, targetFormat: OutputFormat): Entity<String>? {
 
         //TOdo check empty return type
         val returnGene = a.parameters.find { p -> p is GQReturnParam }?.gene
@@ -21,6 +21,7 @@ object GraphQLUtils {
         val inputGenes = a.parameters.filterIsInstance<GQInputParam>().map { it.gene }
 
         var bodyEntity: Entity<String> = Entity.json(" ")
+
 
         if (a.methodType == GQMethodType.QUERY) {
 
@@ -36,6 +37,13 @@ object GraphQLUtils {
                     {"query" : "  { ${a.methodName}  ($printableInputGenes)         } ","variables":null}
                 """.trimIndent())
 
+                } else if (returnGene.name.endsWith(ObjectGene.unionTag)) {//The first is a union type
+
+                    var query = getQuery(returnGene, a)//todo remove the name for the first union
+                    Entity.json("""
+                   {"query" : " {  ${a.methodName} ($printableInputGenes)  { $query }  }   ","variables":null}
+                """.trimIndent())
+
                 } else {
                     val query = getQuery(returnGene, a)
                     Entity.json("""
@@ -43,13 +51,23 @@ object GraphQLUtils {
                 """.trimIndent())
 
                 }
-            } else {//request without arguments and primitive type
-                bodyEntity = if (returnGene == null) {
+            } else {//request without arguments
+                bodyEntity = if (returnGene == null) { //primitive type
                     Entity.json("""
                     {"query" : "  { ${a.methodName}       } ","variables":null}
                 """.trimIndent())
 
-                } else {
+                }
+              /*  else if (returnGene.name.endsWith(ObjectGene.unionTag)|| returnGene.name.endsWith(ObjectGene.interfaceTag)) {//The first one is a union
+
+                    var query = getQuery(returnGene, a)
+                    Entity.json("""
+                   {"query" : "    { $query }     ","variables":null}
+                """.trimIndent())
+
+                } */
+
+                else {
                     var query = getQuery(returnGene, a)
                     Entity.json("""
                    {"query" : " {  ${a.methodName}  $query   }   ","variables":null}
@@ -84,7 +102,7 @@ object GraphQLUtils {
             """.trimIndent())
 
             }
-        }else{
+        } else {
             LoggingUtil.uniqueWarn(log, " method type not supported yet : ${a.methodType}")
             return null
         }
@@ -99,13 +117,14 @@ object GraphQLUtils {
         return returnGene.getValueAsPrintableString(mode = GeneUtils.EscapeMode.BOOLEAN_SELECTION_MODE)
     }
 
+
     fun getPrintableInputGenes(printableInputGene: MutableList<String>): String {
         // Man: is the fun to handle " in printable
         return printableInputGene.joinToString(",").replace("\"", "\\\"")
 
     }
 
-    fun getPrintableInputGene(inputGenes: List<Gene>, targetFormat: OutputFormat?=null): MutableList<String> {
+    fun getPrintableInputGene(inputGenes: List<Gene>, targetFormat: OutputFormat? = null): MutableList<String> {
         val printableInputGene = mutableListOf<String>()
         for (gene in inputGenes) {
             if (gene is EnumGene<*> || (gene is OptionalGene && gene.gene is EnumGene<*>)) {
@@ -136,10 +155,10 @@ object GraphQLUtils {
     }
 
 
-    fun repairIndividual(ind: GraphQLIndividual){
+    fun repairIndividual(ind: GraphQLIndividual) {
         ind.seeActions().forEach { a ->
             a.parameters.filterIsInstance<GQReturnParam>().forEach { p ->
-                if(p.gene is ObjectGene){
+                if (p.gene is ObjectGene) {
                     GeneUtils.repairBooleanSelection(p.gene)
                 }
             }

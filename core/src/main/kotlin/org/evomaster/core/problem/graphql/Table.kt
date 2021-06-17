@@ -13,7 +13,7 @@ class Table(
         /**
          * Describing the name of the table field
          */
-        var tableField: String="",
+        var tableField: String = "",
         /**
          * Describing the kind of the tableField, eg: LIST
          */
@@ -40,7 +40,16 @@ class Table(
         var tableFieldWithArgs: Boolean = false,
 
         /*
-        * Containing the enum values
+         * Containing the enum values
          */
-        var enumValues: MutableList<String> = mutableListOf()
+        var enumValues: MutableList<String> = mutableListOf(),
+        /*
+         * Containing the union possible types
+         */
+        var unionTypes: MutableList<String> = mutableListOf(),
+        /*
+         * Containing the interface possible types
+          */
+        var interfaceTypes: MutableList<String> = mutableListOf()
+
 )

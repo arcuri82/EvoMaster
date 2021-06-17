@@ -46,6 +46,8 @@ object GeneUtils {
         BOOLEAN_SELECTION_NESTED_MODE,
         GQL_INPUT_MODE,
         GQL_INPUT_ARRAY_MODE,
+        BOOLEAN_SELECTION_UNION_INTERFACE_OBJECT_MODE,
+        BOOLEAN_SELECTION_UNION_INTERFACE_OBJECT_FIELDS_MODE,
         GQL_STR_VALUE
     }
 
@@ -152,6 +154,8 @@ object GeneUtils {
             EscapeMode.NONE,
             EscapeMode.X_WWW_FORM_URLENCODED,
             EscapeMode.BOOLEAN_SELECTION_MODE,
+            EscapeMode.BOOLEAN_SELECTION_UNION_INTERFACE_OBJECT_MODE,
+            EscapeMode.BOOLEAN_SELECTION_UNION_INTERFACE_OBJECT_FIELDS_MODE,
             EscapeMode.BOOLEAN_SELECTION_NESTED_MODE,
             EscapeMode.GQL_INPUT_ARRAY_MODE,
             EscapeMode.GQL_INPUT_MODE -> string

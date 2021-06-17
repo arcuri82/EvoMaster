@@ -272,4 +272,38 @@ internal class GeneUtilsTest {
         assertTrue(objPetType.fields.any{ it is BooleanGene && it.value})
     }
 
+
+    @Test
+    fun testUnionSelection(){
+
+        val a = OptionalGene("A",ObjectGene("A", listOf(BooleanGene("a1"))))
+        val b = OptionalGene("B",ObjectGene("B", listOf(BooleanGene("b1"), BooleanGene("b2"))))
+
+        val unionObj = ObjectGene("foo ${ObjectGene.interfaceTag}", listOf(a,b))
+
+        val res = unionObj.getValueAsPrintableString(listOf(), mode = GeneUtils.EscapeMode.BOOLEAN_SELECTION_MODE)
+                .replace(" ", "") // remove empty space to make assertion less brittle
+
+        assertEquals("{...onA{a1}...onB{b1,b2}}", res)//with out the name foo
+    }
+
+    @Test
+    fun testNestedUnionSelection(){
+
+        val a = OptionalGene("A",ObjectGene("A", listOf(BooleanGene("a1"))))
+        val b = OptionalGene("B",ObjectGene("B", listOf(BooleanGene("b1"), BooleanGene("b2"))))
+
+        val optionalUnionObj = OptionalGene("foo ${ObjectGene.interfaceTag}",ObjectGene("foo ${ObjectGene.interfaceTag}", listOf(a,b)))
+
+        val obj = ObjectGene("obj", listOf(optionalUnionObj))
+
+
+        val res = obj.getValueAsPrintableString(listOf(), mode = GeneUtils.EscapeMode.BOOLEAN_SELECTION_MODE)
+                .replace(" ", "") // remove empty space to make assertion less brittle
+
+        assertEquals("{foo{...onA{a1}...onB{b1,b2}}}", res)//with the name foo
+    }
+
+
+
 }

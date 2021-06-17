@@ -1,0 +1,27 @@
+
+type Query {
+    stores: [Store!]!
+}
+
+union Store = Flower | Pot
+
+type Flower{
+
+    id: Int!,
+
+    name: String!
+
+    color: String!
+
+    price: Int!
+}
+
+type Pot{
+
+    id: Int!
+
+    color: String!
+
+    size: Int!
+}
+

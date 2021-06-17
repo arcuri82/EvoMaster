@@ -218,7 +218,18 @@ abstract class Gene(var name: String, children: List<out StructuralElement>) : S
     abstract fun getValueAsPrintableString(
             previousGenes: List<Gene> = listOf(),
             mode: GeneUtils.EscapeMode? = null,
-            targetFormat: OutputFormat? = null
+            targetFormat: OutputFormat? = null,
+            /**
+             * Generic boolean, used for extra info, if needed.
+             *
+             * This was introduced mainly to deal with the printing of objects in GraphQL.
+             * Specify if the name of object should be printed or not, or just directly the
+             * object {} definition, ie,
+             * foo {...}
+             * vs
+             * {...}
+             */
+            extraCheck: Boolean = false
     ) : String
 
 
